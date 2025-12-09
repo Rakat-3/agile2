@@ -21,30 +21,42 @@ Phase 5: implement archive step
 Phase 1 – Base setup (Camunda + PostgreSQL via Docker)
 ------------------------------------------------------
 **a. Workstations:**
-
-contract-tool/
-  backend/
-  bpmn/
-  docker/
+  
+```
+contractManagementTool-camunda/
+                       ├── backend/  
+                       ├── bpmn/  
+                       ├── docker/
+```
 
 **b. Create docker-compose.yml Inside contract-tool/docker/** 
+
 This will give you:
+
 Camunda 7 at http://localhost:8080
+
 PostgreSQL at localhost:5432 with DB contract_db
 
 **c. Start the containers**
-cd ~\contract-tool\docker
-docker compose up -d
+
+'cd ~\contract-tool\docker'
+
+'docker compose up -d'
 
 **Wait until containers are up, then check:**
-Open browser: http://localhost:8080
+
+Open browser: 'http://localhost:8080'
 
 
 **d. Quick check of Camunda**
 
+
 On the Camunda page:
+
 Open Cockpit → default login usually
+
 user: 'demo'
+
 pass: 'demo'
 
 
