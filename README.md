@@ -39,13 +39,21 @@ PostgreSQL at localhost:5432 with DB contract_db
 
 **c. Start the containers**
 
-'cd ~\contract-tool\docker'
+```
+cd ~\contract-tool\docker
+```
 
-'docker compose up -d'
+```
+docker compose up -d
+```
 
 **Wait until containers are up, then check:**
 
-Open browser: 'http://localhost:8080'
+Open browser: 
+
+```
+http://localhost:8080
+```
 
 
 **d. Quick check of Camunda**
@@ -55,9 +63,9 @@ On the Camunda page:
 
 Open Cockpit → default login usually
 
-user: 'demo'
+user: ```demo```
 
-pass: 'demo'
+pass: ```demo```
 
 
 
