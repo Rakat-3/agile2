@@ -6,113 +6,129 @@
   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
   xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
   xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   id="Definitions_ContractManagement"
   targetNamespace="http://frauas.de/contract-management">
 
-  <bpmn:process id="ContractManagementProcess"
-                name="Contract Management Process"
-                isExecutable="true">
+  <bpmn:process
+    id="ContractManagementProcess"
+    name="Contract Management Process"
+    isExecutable="true">
 
-    <!-- Start -->
+    <!-- Start Event -->
     <bpmn:startEvent id="StartEvent" name="Contract Request Started">
       <bpmn:outgoing>Flow_Start_To_Create</bpmn:outgoing>
     </bpmn:startEvent>
 
     <!-- Create Contract -->
-    <bpmn:userTask id="CreateContract"
-                   name="Create Contract Request"
-                   camunda:assignee="procurement_manager">
+    <bpmn:userTask
+      id="CreateContract"
+      name="Create Contract Request"
+      camunda:assignee="procurement_manager">
       <bpmn:incoming>Flow_Start_To_Create</bpmn:incoming>
       <bpmn:outgoing>Flow_Create_To_Offer</bpmn:outgoing>
     </bpmn:userTask>
 
     <!-- Supplier Offer -->
-    <bpmn:userTask id="SupplierOffer"
-                   name="Supplier Offer Submission"
-                   camunda:assignee="supplier">
+    <bpmn:userTask
+      id="SupplierOffer"
+      name="Supplier Offer Submission"
+      camunda:assignee="supplier">
       <bpmn:incoming>Flow_Create_To_Offer</bpmn:incoming>
       <bpmn:outgoing>Flow_Offer_To_Negotiation</bpmn:outgoing>
     </bpmn:userTask>
 
     <!-- Negotiation -->
-    <bpmn:userTask id="Negotiation"
-                   name="Negotiation of Terms"
-                   camunda:assignee="procurement_manager">
+    <bpmn:userTask
+      id="Negotiation"
+      name="Negotiation of Terms"
+      camunda:assignee="procurement_manager">
       <bpmn:incoming>Flow_Offer_To_Negotiation</bpmn:incoming>
       <bpmn:outgoing>Flow_Negotiation_To_Legal</bpmn:outgoing>
     </bpmn:userTask>
 
     <!-- Legal Review -->
-    <bpmn:userTask id="LegalReview"
-                   name="Legal Review"
-                   camunda:assignee="legal_counsel">
+    <bpmn:userTask
+      id="LegalReview"
+      name="Legal Review"
+      camunda:assignee="legal_counsel">
       <bpmn:incoming>Flow_Negotiation_To_Legal</bpmn:incoming>
       <bpmn:outgoing>Flow_Legal_To_Gateway</bpmn:outgoing>
     </bpmn:userTask>
 
     <!-- Approval Gateway -->
-    <bpmn:exclusiveGateway id="ApprovalGateway"
-                            name="Contract Approved?">
+    <bpmn:exclusiveGateway
+      id="ApprovalGateway"
+      name="Contract Approved?">
       <bpmn:incoming>Flow_Legal_To_Gateway</bpmn:incoming>
       <bpmn:outgoing>Flow_Approved</bpmn:outgoing>
       <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
     </bpmn:exclusiveGateway>
 
     <!-- Store Final Contract -->
-    <bpmn:serviceTask id="StoreContract"
-                      name="Store Final Contract"
-                      camunda:type="external">
+    <bpmn:serviceTask
+      id="StoreContract"
+      name="Store Final Contract"
+      camunda:type="external">
       <bpmn:incoming>Flow_Approved</bpmn:incoming>
       <bpmn:outgoing>Flow_To_End</bpmn:outgoing>
     </bpmn:serviceTask>
 
-    <!-- End -->
-    <bpmn:endEvent id="EndEvent"
-                   name="Contract Finalized">
+    <!-- End Event -->
+    <bpmn:endEvent id="EndEvent" name="Contract Finalized">
       <bpmn:incoming>Flow_To_End</bpmn:incoming>
     </bpmn:endEvent>
 
-    <!-- Rejection Loop -->
-    <bpmn:sequenceFlow id="Flow_Rejected"
-                       sourceRef="ApprovalGateway"
-                       targetRef="Negotiation">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
-        ${approved == false}
-      </bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-
     <!-- Sequence Flows -->
-    <bpmn:sequenceFlow id="Flow_Start_To_Create"
-                       sourceRef="StartEvent"
-                       targetRef="CreateContract"/>
+    <bpmn:sequenceFlow
+      id="Flow_Start_To_Create"
+      sourceRef="StartEvent"
+      targetRef="CreateContract"/>
 
-    <bpmn:sequenceFlow id="Flow_Create_To_Offer"
-                       sourceRef="CreateContract"
-                       targetRef="SupplierOffer"/>
+    <bpmn:sequenceFlow
+      id="Flow_Create_To_Offer"
+      sourceRef="CreateContract"
+      targetRef="SupplierOffer"/>
 
-    <bpmn:sequenceFlow id="Flow_Offer_To_Negotiation"
-                       sourceRef="SupplierOffer"
-                       targetRef="Negotiation"/>
+    <bpmn:sequenceFlow
+      id="Flow_Offer_To_Negotiation"
+      sourceRef="SupplierOffer"
+      targetRef="Negotiation"/>
 
-    <bpmn:sequenceFlow id="Flow_Negotiation_To_Legal"
-                       sourceRef="Negotiation"
-                       targetRef="LegalReview"/>
+    <bpmn:sequenceFlow
+      id="Flow_Negotiation_To_Legal"
+      sourceRef="Negotiation"
+      targetRef="LegalReview"/>
 
-    <bpmn:sequenceFlow id="Flow_Legal_To_Gateway"
-                       sourceRef="LegalReview"
-                       targetRef="ApprovalGateway"/>
+    <bpmn:sequenceFlow
+      id="Flow_Legal_To_Gateway"
+      sourceRef="LegalReview"
+      targetRef="ApprovalGateway"/>
 
-    <bpmn:sequenceFlow id="Flow_Approved"
-                       sourceRef="ApprovalGateway"
-                       targetRef="StoreContract">
+    <!-- Approved -->
+    <bpmn:sequenceFlow
+      id="Flow_Approved"
+      sourceRef="ApprovalGateway"
+      targetRef="StoreContract">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
         ${approved == true}
       </bpmn:conditionExpression>
     </bpmn:sequenceFlow>
 
-    <bpmn:sequenceFlow id="Flow_To_End"
-                       sourceRef="StoreContract"
-                       targetRef="EndEvent"/>
+    <!-- Rejected (Loop) -->
+    <bpmn:sequenceFlow
+      id="Flow_Rejected"
+      sourceRef="ApprovalGateway"
+      targetRef="Negotiation">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${approved == false}
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow
+      id="Flow_To_End"
+      sourceRef="StoreContract"
+      targetRef="EndEvent"/>
 
   </bpmn:process>
 
