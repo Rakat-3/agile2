@@ -70,7 +70,8 @@
       "description": "contractStartDate",
       "validate": {
         "required": true
-      }
+      },
+      "disallowPassedDates": true
     },
     {
       "subtype": "date",
@@ -87,7 +88,8 @@
       },
       "disabled": false,
       "disallowPassedDates": true,
-      "description": "contractEndDate"
+      "description": "contractEndDate",
+      "readonly": false
     },
     {
       "label": "Description",
@@ -101,18 +103,6 @@
       "validate": {
         "required": false
       }
-    },
-    {
-      "label": "Initial Documents (Optional)",
-      "type": "filepicker",
-      "layout": {
-        "row": "Row_00w5ag6",
-        "columns": null
-      },
-      "id": "Field_15iy6tu",
-      "key": "initialDocuments",
-      "accept": ".jpg, .jpeg, .pdf, .docx, .doc, .xls, .csv",
-      "properties": {}
     },
     {
       "type": "separator",
