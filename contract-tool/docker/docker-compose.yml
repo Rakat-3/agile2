@@ -1,0 +1,107 @@
+# version: "3.9"
+
+services:
+
+  # ============================
+  # PostgreSQL (Camunda Database)
+  # ============================
+  postgres:
+    image: postgres:14
+    container_name: postgresql
+    environment:
+      POSTGRES_DB: camunda
+      POSTGRES_USER: camunda
+      POSTGRES_PASSWORD: camunda
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - camunda-net
+
+  # ============================
+  # Camunda BPM Platform 7
+  # ============================
+  camunda:
+    image: camunda/camunda-bpm-platform:run-latest
+    container_name: camunda-app
+    environment:
+      DB_DRIVER: org.postgresql.Driver
+      DB_URL: jdbc:postgresql://postgres:5432/camunda
+      DB_USERNAME: camunda
+      DB_PASSWORD: camunda
+      CAMUNDA_CONNECTOR_HTTP_ENABLED: "true"
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    networks:
+      - camunda-net
+
+  # ============================
+  # FastAPI Backend
+  # ============================
+  backend:
+    build: ../backend          # FIXED PATH
+    container_name: backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=camunda
+      - DB_USER=camunda
+      - DB_PASSWORD=camunda
+    depends_on:
+      - postgres
+      - mailhog
+    networks:
+      - camunda-net
+
+
+  # ============================
+  # MailHog (Demo Email System)
+  # ============================
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "8025:8025"   # MailHog Web UI
+      - "1025:1025"   # SMTP server
+    networks:
+      - camunda-net
+
+  legal-notify-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: legal-notify-worker
+    environment:
+      - ENGINE_REST=http://camunda-app:8080/engine-rest
+      - MAILHOG_HOST=mailhog
+      - MAILHOG_PORT=1025
+      - TOPIC_NAME=notify-legal
+      - FROM_EMAIL=noreply@local.com
+    depends_on:
+      - camunda
+      - mailhog
+    networks:
+      - camunda-net
+    restart: unless-stopped
+
+
+
+# ============================
+# Volumes
+# ============================
+volumes:
+  postgres-data:
+
+# ============================
+# Networks
+# ============================
+networks:
+  camunda-net:
+    driver: bridge
