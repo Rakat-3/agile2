@@ -1,7 +1,6 @@
-# version: "3.9"
+version: "3.9"
 
 services:
-
   # ============================
   # PostgreSQL (Camunda Database)
   # ============================
@@ -42,7 +41,7 @@ services:
   # FastAPI Backend
   # ============================
   backend:
-    build: ../backend          # FIXED PATH
+    build: ../backend
     container_name: backend
     ports:
       - "8000:8000"
@@ -54,12 +53,34 @@ services:
       - DB_NAME=camunda
       - DB_USER=camunda
       - DB_PASSWORD=camunda
+      # Azure SQL Credentials (from .env)
+      - AZURE_SQL_SERVER=${AZURE_SQL_SERVER}
+      - AZURE_SQL_DATABASE=${AZURE_SQL_DATABASE}
+      - AZURE_SQL_USER=${AZURE_SQL_USER}
+      - AZURE_SQL_PASSWORD=${AZURE_SQL_PASSWORD}
     depends_on:
       - postgres
       - mailhog
     networks:
       - camunda-net
 
+  # ============================
+  # Frontend (React + Vite)
+  # ============================
+  frontend:
+    build: ../frontend
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - camunda-net
 
   # ============================
   # MailHog (Demo Email System)
@@ -68,18 +89,23 @@ services:
     image: mailhog/mailhog
     container_name: mailhog
     ports:
-      - "8025:8025"   # MailHog Web UI
-      - "1025:1025"   # SMTP server
+      - "8025:8025"
+      - "1025:1025"
     networks:
       - camunda-net
 
+  # ============================
+  # Existing: Notify Legal Worker
+  # ============================
   legal-notify-worker:
     build:
       context: .
       dockerfile: Dockerfile.worker
     container_name: legal-notify-worker
     environment:
-      - ENGINE_REST=http://camunda-app:8080/engine-rest
+      - ENGINE_REST=http://camunda:8080/engine-rest
+      - CAMUNDA_USER=demo
+      - CAMUNDA_PASS=demo
       - MAILHOG_HOST=mailhog
       - MAILHOG_PORT=1025
       - TOPIC_NAME=notify-legal
@@ -91,17 +117,71 @@ services:
       - camunda-net
     restart: unless-stopped
 
+  # ============================
+  # Azure SQL Storage Workers
+  # ============================
 
+  store-create-contract-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: store-create-contract-worker
+    command: [ "python", "worker_store_create_contract.py" ]
+    env_file:
+      - .env
+    environment:
+      - ENGINE_REST=http://camunda:8080/engine-rest
+      - CAMUNDA_USER=demo
+      - CAMUNDA_PASS=demo
+      - TOPIC_NAME=store-create-contract
+    depends_on:
+      - camunda
+    networks:
+      - camunda-net
+    restart: unless-stopped
 
-# ============================
-# Volumes
-# ============================
+  store-contract-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: store-contract-worker
+    command: [ "python", "worker_store_contract.py" ]
+    env_file:
+      - .env
+    environment:
+      - ENGINE_REST=http://camunda:8080/engine-rest
+      - CAMUNDA_USER=demo
+      - CAMUNDA_PASS=demo
+      - TOPIC_NAME=store-contract
+    depends_on:
+      - camunda
+    networks:
+      - camunda-net
+    restart: unless-stopped
+
+  store-reject-contract-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: store-reject-contract-worker
+    command: [ "python", "worker_store_reject_contract.py" ]
+    env_file:
+      - .env
+    environment:
+      - ENGINE_REST=http://camunda:8080/engine-rest
+      - CAMUNDA_USER=demo
+      - CAMUNDA_PASS=demo
+      - TOPIC_NAME=store-reject-contract
+    depends_on:
+      - camunda
+    networks:
+      - camunda-net
+    restart: unless-stopped
+
 volumes:
   postgres-data:
 
-# ============================
-# Networks
-# ============================
+
 networks:
   camunda-net:
     driver: bridge

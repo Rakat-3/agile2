@@ -1,3 +1,4 @@
-camunda-external-task-client-python3==4.5.0
-pydantic>=1.10,<3
-requests>=2.24.0
+requests
+pyodbc
+camunda-external-task-client-python3
+pydantic

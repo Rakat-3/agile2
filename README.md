@@ -1,95 +1,92 @@
-# Contract Management Tool - camunda
-Using camunda, we are implementing a tool to manage contract efficiently and smoothly.
+# Contract Management Tool - Camunda
 
+A comprehensive Contract Management System capable of handling the lifecycle of contracts—from submission to approval or rejection. The solution leverages **Camunda Platform 7** for process orchestration, **FastAPI** for backend logic, **React (Vite)** for a modern frontend, and **Azure SQL** for robust data persistence.
 
-## PROJECT PHASES:
+## 🚀 Features
 
-Phase 1 – Base setup (Camunda + PostgreSQL via Docker)
+-   **Dashboard**: Real-time overview of contract statuses (Created, Approved, Rejected).
+-   **Workflow Automation**: Business processes managed by Camunda (BPMN).
+-   **Contract Management**: Submit, View, Approve, and Reject contracts.
+-   **Automated Listeners**: External Python workers handle database operations and notifications.
+-   **Email Integration**: Notifications simulated via MailHog.
 
-Phase 2: create backend (FastAPI) and connect to PostgreSQL
+## 🏗 System Architecture
 
-Phase 3: create the first BPMN process and deploy to Camunda
+The project follows a containerized microservices architecture:
 
-Phase 4: connect backend ↔ Camunda (start process, complete tasks)
+| Service | Technology | Description |
+| :--- | :--- | :--- |
+| **Frontend** | React + Vite | User Interface for dashboard and contract forms. |
+| **Backend** | FastAPI | REST API for data retrieval and initiating workflows. |
+| **Workflow Engine** | Camunda 7 | Orchestrates the `Contract_Management_Process` BPMN. |
+| **Database** | Azure SQL | Stores contract business data (`CreatedContracts`, etc.). |
+| **System DB** | PostgreSQL | Stores Camunda internal data (users, history, etc.). |
+| **Workers** | Python | External task clients for Camunda (Save to DB, Send Email). |
 
-Phase 5: implement archive step
+## 🛠 Prerequisites
 
+-   **Docker** & **Docker Compose** installed.
+-   **Azure SQL** database credentials (server, user, password, db name).
 
-## EXPLANATIONS AND IMPLEMENTS:
+## ⚡ Quick Start
 
+### 1. Configuration
 
-Phase 1 – Base setup (Camunda + PostgreSQL via Docker)
-------------------------------------------------------
-**a. Workstations:**
-  
+Ensure you have a `.env` file in the `docker/` directory with your Azure SQL credentials.
+
+```bash
+# Example .env config
+AZURE_SQL_SERVER=your-server.database.windows.net
+AZURE_SQL_DATABASE=contract_db
+AZURE_SQL_USER=your_user
+AZURE_SQL_PASSWORD=your_password
 ```
+
+### 2. Run with Docker Compose
+
+The entire stack (Frontend, Backend, Camunda, DBs, Workers) is orchestrated via Docker Compose.
+
+```bash
+cd docker
+docker compose up -d --build
+```
+
+### 3. Access Services
+
+Once the containers are up, access the different components:
+
+| Component | URL | Credentials (if any) |
+| :--- | :--- | :--- |
+| **Frontend Dashboard** | `http://localhost:5173` | N/A |
+| **Backend API** | `http://localhost:8000` | N/A |
+| **Camunda Cockpit** | `http://localhost:8080` | `demo` / `demo` |
+| **MailHog (Email)** | `http://localhost:8025` | N/A |
+
+### 4. Stopping the System
+
+```bash
+docker compose down
+```
+
+## 📂 Project Structure
+
+```text
 contractManagementTool-camunda/
-                       ├── backend/  
-                       ├── bpmn/  
-                       ├── docker/
+├── backend/            # FastAPI Application (API & DB Logic)
+├── frontend/           # React + Vite Application
+├── bpmn/               # BPMN Process Definitions
+├── docker/             # Docker Compose & Worker Scripts
+│   ├── worker_store_*.py    # External Task Workers
+│   ├── docker-compose.yml   # Orchestration
+│   └── .env                 # Config (Secrets)
 ```
 
-**b. Create docker-compose.yml Inside contract-tool/docker/** 
+## 🔍 Workflow Details
 
-This will give you:
-
-Camunda 7 at http://localhost:8080
-
-PostgreSQL at localhost:5432 with DB contract_db
-
-**c. Start the containers**
-
-```
-cd ~\contract-tool\docker
-```
-
-```
-docker compose up -d
-```
-
-**Wait until containers are up, then check:**
-
-Open browser: 
-
-```
-http://localhost:8080
-```
-
-
-**d. Quick check of Camunda**
-
-
-On the Camunda page:
-
-Open Cockpit → default login usually
-
-user: ```demo```
-
-pass: ```demo```
-
-
-
-
-
-
-## Next Phases
-
-Phase 2: create backend (FastAPI) and connect to PostgreSQL
-
-a. Create virtual environment
-
-Your terminal should show:
-
-(venv) user@kali:~/contract-tool/backend$
-
-```
-backend/
- ├── main.py          # FastAPI application
- ├── db.py            # Database models + session
-```
-
-Phase 3: create the first BPMN process and deploy to Camunda
-
-Phase 4: connect backend ↔ Camunda (start process, complete tasks)
-
-Phase 5: implement archive step
+The system follows the `Contract_Management_Process`:
+1.  **Contract Submitted**: User submits via Frontend -> Backend starts process.
+2.  **Worker Store**: Python worker saves contract to `CreatedContracts` in Azure SQL.
+3.  **Approval Task**: User Task in Camunda for Manager approval.
+4.  **Decision Gateway**:
+    -   **Approved**: Worker saves to `ApprovedContracts`.
+    -   **Rejected**: Worker saves to `RejectedContracts`.
