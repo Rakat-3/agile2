@@ -116,24 +116,26 @@ def main():
                         cur = conn.cursor()
                         cur.execute(
                             """
-                            INSERT INTO RejectedContracts
-                            (ContractId, ProcessInstanceId, BusinessKey,
-                             ContractTitle, LegalComment, ApprovalDecision, RejectedAt)
-                            VALUES
-                            (CONVERT(uniqueidentifier, ?), ?, ?, ?, ?, ?, SYSUTCDATETIME())
+                            UPDATE Contracts
+                            SET 
+                                LegalComment = ?,
+                                ApprovalDecision = ?,
+                                RejectedAt = SYSUTCDATETIME(),
+                                ContractStatus = 'Rejected'
+                            WHERE ContractId = ?
                             """,
-                            contract_id, process_instance_id, business_key,
-                            contract_title, legal_comment, approval_decision
+                            legal_comment, approval_decision, contract_id
                         )
                         conn.commit()
 
                         # --- VERIFICATION ---
-                        cur.execute("SELECT ContractTitle, ApprovalDecision FROM RejectedContracts WHERE ContractId = ?", contract_id)
+                        # --- VERIFICATION ---
+                        cur.execute("SELECT ContractTitle, ContractStatus FROM Contracts WHERE ContractId = ?", contract_id)
                         row = cur.fetchone()
                         if row:
-                            print(f"[reject-worker] VERIFICATION SUCCESS: Contract '{row[0]}' stored in RejectedContracts (Decision: {row[1]}).")
+                            print(f"[reject-worker] VERIFICATION SUCCESS: Contract '{row[0]}' status '{row[1]}' in Contracts table.")
                         else:
-                            print(f"[reject-worker] VERIFICATION FAILED: Row not found after insert!")
+                            print(f"[reject-worker] VERIFICATION FAILED: Row not found after update!")
                         # --------------------
 
                     complete_task(engine_rest, auth, task_id, worker_id)

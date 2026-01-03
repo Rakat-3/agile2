@@ -119,26 +119,28 @@ def main():
                         cur = conn.cursor()
                         cur.execute(
                             """
-                            INSERT INTO ApprovedContracts
-                            (ContractId, ProcessInstanceId, BusinessKey,
-                             ContractTitle, ContractType,
-                             StorageLocation, VersionNumber, SignedDate, ApprovedAt)
-                            VALUES
-                            (CONVERT(uniqueidentifier, ?), ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())
+                            UPDATE Contracts
+                            SET 
+                                StorageLocation = ?,
+                                VersionNumber = ?,
+                                SignedDate = ?,
+                                ApprovedAt = SYSUTCDATETIME(),
+                                ContractStatus = 'Approved'
+                            WHERE ContractId = ?
                             """,
-                            contract_id, process_instance_id, business_key,
-                            contract_title, contract_type,
-                            storage_location, version_number, signed_date
+                            storage_location, version_number, signed_date, contract_id
                         )
                         conn.commit()
                         
                         # --- VERIFICATION ---
-                        cur.execute("SELECT ContractTitle, StorageLocation FROM ApprovedContracts WHERE ContractId = ?", contract_id)
+                        # --- VERIFICATION ---
+                        cur.execute("SELECT ContractTitle, ContractStatus FROM Contracts WHERE ContractId = ?", contract_id)
                         row = cur.fetchone()
                         if row:
-                            print(f"[approve-worker] VERIFICATION SUCCESS: Contract '{row[0]}' stored in ApprovedContracts at '{row[1]}'.")
+                            print(f"[approve-worker] VERIFICATION SUCCESS: Contract '{row[0]}' status '{row[1]}' in Contracts table.")
                         else:
-                            print(f"[approve-worker] VERIFICATION FAILED: Row not found after insert!")
+                            print(f"[approve-worker] VERIFICATION FAILED: Row not found after update!")
+                        # --------------------
                         # --------------------
 
                     complete_task(engine_rest, auth, task_id, worker_id)

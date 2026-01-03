@@ -136,12 +136,16 @@ def main():
                         cur = conn.cursor()
                         cur.execute(
                             """
-                            INSERT INTO CreatedContracts
+                            INSERT INTO Contracts
                             (ContractId, ProcessInstanceId, BusinessKey,
                              ContractTitle, ContractType, Roles, Skills, RequestType,
-                             Budget, ContractStartDate, ContractEndDate, Description, CreatedAt)
+                             Budget, ContractStartDate, ContractEndDate, Description, 
+                             ContractStatus, ProvidersBudget, ProvidersComment,
+                             CreatedAt)
                             VALUES
-                            (CONVERT(uniqueidentifier, ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())
+                            (CONVERT(uniqueidentifier, ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                             'Submitted', NULL, '', 
+                             SYSUTCDATETIME())
                             """,
                             contract_id, process_instance_id, business_key,
                             contract_title, contract_type, roles, skills, request_type,
@@ -149,14 +153,7 @@ def main():
                         )
                         conn.commit()
 
-                        # --- VERIFICATION ---
-                        cur.execute("SELECT ContractTitle, Budget FROM CreatedContracts WHERE ContractId = ?", contract_id)
-                        row = cur.fetchone()
-                        if row:
-                            print(f"[create-worker] VERIFICATION SUCCESS: Contract '{row[0]}' (Budget: {row[1]}) stored in CreatedContracts.")
-                        else:
-                            print(f"[create-worker] VERIFICATION FAILED: Row not found after insert!")
-                        # --------------------
+
 
                     # Push contractId back so next steps can use it
                     complete_task(engine_rest, auth, task_id, worker_id, {"contractId": contract_id})
