@@ -1,92 +1,89 @@
-# Contract Management Tool - Camunda
+# Contract Management System (Camunda BPMN + FastAPI)
 
-A comprehensive Contract Management System capable of handling the lifecycle of contracts—from submission to approval or rejection. The solution leverages **Camunda Platform 7** for process orchestration, **FastAPI** for backend logic, **React (Vite)** for a modern frontend, and **Azure SQL** for robust data persistence.
+A professional, enterprise-grade Contract Management solution designed for high-efficiency procurement workflows. This system orchestrates the entire lifecycle of a contract—from initial requirements drafting to provider offer review and final legal approval—using **Camunda Platform 7** for process orchestration and **FastAPI** for a robust, API-only backend.
 
-## 🚀 Features
+## 🌟 Key Features
 
--   **Dashboard**: Real-time overview of contract statuses (Created, Approved, Rejected).
--   **Workflow Automation**: Business processes managed by Camunda (BPMN).
--   **Contract Management**: Submit, View, Approve, and Reject contracts.
--   **Automated Listeners**: External Python workers handle database operations and notifications.
--   **Email Integration**: Notifications simulated via MailHog.
+-   **Workflow Orchestration**: End-to-end process management involving Procurement Managers, Provider Managers (via API), and Legal Counsel.
+-   **API-First for Providers**: External providers interact with the system through dedicated REST API endpoints (`GET` and `PATCH`), bypassing a traditional dashboard for direct integration.
+-   **Automated Variable Sync**: Real-time synchronization between API updates and Camunda process variables, ensuring stakeholders always see the latest provider offers.
+-   **Unified Persistence**: A single, optimized Azure SQL `Contracts` table with dynamic status tracking (`Submitted`, `Running`, `Approved`, `Rejected`).
+-   **Email Notifications**: Automated HTML-formatted email alerts delivered via **MailHog** for cross-stakeholder communication.
+-   **Containerized Deployment**: Fully orchestrated via Docker Compose for easy environment setup and scalability.
 
 ## 🏗 System Architecture
 
-The project follows a containerized microservices architecture:
+The project follows a modular, containerized architecture:
 
-| Service | Technology | Description |
+| Component | Technology | Role |
 | :--- | :--- | :--- |
-| **Frontend** | React + Vite | User Interface for dashboard and contract forms. |
-| **Backend** | FastAPI | REST API for data retrieval and initiating workflows. |
-| **Workflow Engine** | Camunda 7 | Orchestrates the `Contract_Management_Process` BPMN. |
-| **Database** | Azure SQL | Stores contract business data (`CreatedContracts`, etc.). |
-| **System DB** | PostgreSQL | Stores Camunda internal data (users, history, etc.). |
-| **Workers** | Python | External task clients for Camunda (Save to DB, Send Email). |
+| **Backend API** | FastAPI | Central hub for process initiation and provider data updates. |
+| **Workflow Engine** | Camunda 7 | Orchestrates the `ContractTool` BPMN process and user tasks. |
+| **Database** | Azure SQL | Primary data store for all contract metadata and status. |
+| **System DB** | PostgreSQL | Reliability store for Camunda's internal engine state. |
+| **Workers** | Python | External task clients for automated DB storage and email alerts. |
+| **Email Server** | MailHog | SMTP server for testing automated notifications in development. |
 
 ## 🛠 Prerequisites
 
--   **Docker** & **Docker Compose** installed.
--   **Azure SQL** database credentials (server, user, password, db name).
+-   **Docker** & **Docker Compose**
+-   **Azure SQL** Instance (Managed or Local Simulation)
 
 ## ⚡ Quick Start
 
 ### 1. Configuration
 
-Ensure you have a `.env` file in the `docker/` directory with your Azure SQL credentials.
+Ensure your `docker/.env` file is populated with your specific Azure SQL credentials:
 
 ```bash
-# Example .env config
 AZURE_SQL_SERVER=your-server.database.windows.net
 AZURE_SQL_DATABASE=contract_db
 AZURE_SQL_USER=your_user
 AZURE_SQL_PASSWORD=your_password
 ```
 
-### 2. Run with Docker Compose
-
-The entire stack (Frontend, Backend, Camunda, DBs, Workers) is orchestrated via Docker Compose.
+### 2. Launch the Ecosystem
 
 ```bash
 cd docker
 docker compose up -d --build
 ```
 
-### 3. Access Services
+### 3. Service Access
 
-Once the containers are up, access the different components:
-
-| Component | URL | Credentials (if any) |
+| Service | Access URL | Credentials |
 | :--- | :--- | :--- |
-| **Frontend Dashboard** | `http://localhost:5173` | N/A |
-| **Backend API** | `http://localhost:8000` | N/A |
-| **Camunda Cockpit** | `http://localhost:8080` | `demo` / `demo` |
-| **MailHog (Email)** | `http://localhost:8025` | N/A |
-
-### 4. Stopping the System
-
-```bash
-docker compose down
-```
+| **Backend Swagger Docs** | `http://localhost:8000/docs` | N/A |
+| **Camunda Tasklist** | `http://localhost:8080/camunda/app/tasklist` | `demo` / `demo` |
+| **MailHog Web UI** | `http://localhost:8025` | N/A |
 
 ## 📂 Project Structure
 
 ```text
-contractManagementTool-camunda/
-├── backend/            # FastAPI Application (API & DB Logic)
-├── frontend/           # React + Vite Application
-├── bpmn/               # BPMN Process Definitions
-├── docker/             # Docker Compose & Worker Scripts
-│   ├── worker_store_*.py    # External Task Workers
-│   ├── docker-compose.yml   # Orchestration
-│   └── .env                 # Config (Secrets)
+├── backend/            # FastAPI source code and API definitions
+├── bpmn/               # BPMN XML definitions and Camunda Forms
+│   └── forms/          # UI definitions for Camunda Tasklist
+├── docker/             # Docker configuration and Python workers
+│   ├── email_worker.py # Unified HTML email notification engine
+│   └── worker_*.py     # Specialized DB persistence workers
 ```
 
-## 🔍 Workflow Details
+## 🔍 Workflow Lifecycle
 
-The system follows the `Contract_Management_Process`:
-1.  **Contract Submitted**: User submits via Frontend -> Backend starts process.
-2.  **Worker Store**: Python worker saves contract to `CreatedContracts` in Azure SQL.
-3.  **Approval Task**: User Task in Camunda for Manager approval.
-4.  **Decision Gateway**:
-    -   **Approved**: Worker saves to `ApprovedContracts`.
-    -   **Rejected**: Worker saves to `RejectedContracts`.
+1.  **Drafting**: Procurement Manager creates contract requirements in Camunda Tasklist.
+2.  **Notification**: A notification is automatically sent to the Provider Manager (`provider@local.com`).
+3.  **Submission**: Provider retrieves and updates the contract offer via the **Provider API** (`GET` / `PATCH`).
+4.  **Sync**: The backend automatically syncs the provider's data back to the Camunda process.
+5.  **Review**: Procurement Manager reviews offers and forwards to Legal.
+6.  **Approval**: Legal Counsel approves or declines. Approved contracts are finalized in the DB.
+
+## 📡 Provider API Overview
+
+### `GET /api/providers/contracts`
+Retrieves a list of active contracts assigned to providers with `Submitted` or `Running` status.
+
+### `PATCH /api/providers/contracts/{id}`
+Allows providers to submit their budget, comments, and confirmation of requirements.
+
+---
+*Developed for professional contract lifecycle management.*
