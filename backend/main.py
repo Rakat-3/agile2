@@ -31,7 +31,7 @@ def test_db():
 @app.get("/stats")
 def get_stats():
     """
-    Returns counts for Submitted, Approved, and Rejected contracts from Azure SQL.
+    Returns counts for Submitted, Running, Approved, and Rejected contracts from Azure SQL.
     """
     try:
         conn = get_azure_connection()
@@ -40,22 +40,40 @@ def get_stats():
         cursor.execute("SELECT ContractStatus, COUNT(*) FROM Contracts GROUP BY ContractStatus")
         rows = cursor.fetchall()
         
-        stats = {"submitted": 0, "approved": 0, "rejected": 0}
-        
-        for status, count in rows:
-            s = status.lower() if status else ""
-            if s == "submitted" or s == "running":
-                stats["submitted"] += count
-            elif s == "approved":
-                stats["approved"] += count
-            elif s == "rejected":
-                stats["rejected"] += count
-        
-        conn.close()
-        
+        stats = {row[0]: row[1] for row in rows} if rows else {}
+        # Ensure base keys for safety
+        for k in ["Submitted", "Running", "Approved", "Rejected"]:
+            if k not in stats: stats[k] = 0
+            
         return stats
     except Exception as e:
         print(f"Error in /stats: {e}", file=sys.stderr)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/dashboard-stats")
+def get_admin_dashboard_stats():
+    """
+    Detailed stats for the Cockpit Dashboard Plugin.
+    """
+    try:
+        conn = get_azure_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT ContractStatus, COUNT(*) FROM Contracts GROUP BY ContractStatus")
+        rows = cursor.fetchall()
+        status_counts = {row[0]: row[1] for row in rows} if rows else {}
+        
+        for s in ["Submitted", "Running", "Approved", "Rejected"]:
+            if s not in status_counts:
+                status_counts[s] = 0
+                
+        return {
+            "totalContracts": sum(status_counts.values()),
+            "byStatus": status_counts,
+            "systemHealth": "Healthy"
+        }
+    except Exception as e:
+        print(f"Error in /api/admin/dashboard-stats: {e}", file=sys.stderr)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/contracts/{status}")
@@ -173,38 +191,44 @@ def update_provider_contract(contract_id: str, update: ProviderUpdate):
 
         # Camunda Sync: Try to find and update process variables
         try:
-            print(f"[Camunda Sync] Looking for instance with contractId={contract_id}...")
-            # Use /variable-instance to find the process instance ID
-            # This is more reliable as it searches throughout the process lifecycle
-            instances_res = requests.get(f"{CAMUNDA_URL}/variable-instance?variableName=contractId&variableValue={contract_id}")
-            variables = instances_res.json()
+            print(f"[Camunda Sync] Looking for ACTIVE instances with contractId={contract_id}...", flush=True)
+            # Find all active process instances with this contractId
+            search_url = f"{CAMUNDA_URL}/process-instance?variables=contractId_eq_{contract_id}&active=true"
+            instances_res = requests.get(search_url)
+            active_instances = instances_res.json()
             
-            if variables:
-                instance_id = variables[0]["processInstanceId"]
-                print(f"[Camunda Sync] Found instance {instance_id}. Updating variables...")
+            if not active_instances:
+                 print(f"[Camunda Sync] No ACTIVE process instances found. Checking history for fallback...")
+                 fallback_res = requests.get(f"{CAMUNDA_URL}/variable-instance?variableName=contractId&variableValue={contract_id}")
+                 active_instances = [{"id": v["processInstanceId"]} for v in fallback_res.json()[:1]] # Use first one from history as fallback
+
+            if active_instances:
+                print(f"[Camunda Sync] Syncing to {len(active_instances)} instance(s)...", flush=True)
                 
-                # 2. Update variables (handle None/null safely)
+                # Prepare variables
                 modifications = {}
                 if update.providersName is not None:
-                    modifications["providersName"] = {"value": update.providersName, "type": "String"}
+                    modifications["providersName"] = {"value": str(update.providersName), "type": "String"}
                 if update.providersBudget is not None:
                     modifications["providersBudget"] = {"value": int(update.providersBudget), "type": "Integer"}
                 if update.providersComment is not None:
-                    modifications["providersComment"] = {"value": update.providersComment, "type": "String"}
+                    modifications["providersComment"] = {"value": str(update.providersComment), "type": "String"}
                 if update.meetRequirement is not None:
-                    modifications["meetRequirement"] = {"value": update.meetRequirement, "type": "String"}
+                    modifications["meetRequirement"] = {"value": str(update.meetRequirement), "type": "String"}
 
                 if modifications:
                     var_payload = {"modifications": modifications}
-                    print(f"[Camunda Sync] Sending payload: {var_payload}")
-                    resp = requests.post(f"{CAMUNDA_URL}/process-instance/{instance_id}/variables", json=var_payload)
-                    print(f"[Camunda Sync] Status Code: {resp.status_code}")
-                    if resp.status_code >= 400:
-                        print(f"[Camunda Sync] Response Body: {resp.text}")
-                    else:
-                        print(f"[Camunda Sync] Successfully pushed variables to {instance_id}")
+                    for inst in active_instances:
+                        inst_id = inst.get("id") or inst.get("processInstanceId")
+                        if not inst_id: continue
+                        
+                        resp = requests.post(f"{CAMUNDA_URL}/process-instance/{inst_id}/variables", json=var_payload)
+                        if resp.status_code >= 400:
+                            print(f"[Camunda Sync] ERROR for {inst_id}: {resp.status_code} - {resp.text}", flush=True)
+                        else:
+                            print(f"[Camunda Sync] SUCCESS: Pushed variables to {inst_id}", flush=True)
             else:
-                print(f"[Camunda Sync] No process instance found with contractId={contract_id}")
+                print(f"[Camunda Sync] CRITICAL: No instance found at all for contractId={contract_id}", flush=True)
         except Exception as camunda_err:
             print(f"Warning: Failed to sync with Camunda: {camunda_err}", file=sys.stderr)
 
