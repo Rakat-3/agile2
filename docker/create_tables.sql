@@ -26,15 +26,16 @@ GO CREATE TABLE dbo.Contracts (
     ProvidersBudget INT NULL,
     ProvidersComment NVARCHAR(MAX) DEFAULT '',
     ProvidersName NVARCHAR(255) NULL,
+    -- Provider Fields
+    ProvidersBudget INT NULL,
+    ProvidersComment NVARCHAR(MAX) DEFAULT '',
+    ProvidersName NVARCHAR(255) NULL,
     -- Approval Fields
-    StorageLocation NVARCHAR(255) NULL,
-    VersionNumber NVARCHAR(100) NULL,
     SignedDate NVARCHAR(50) NULL,
     ApprovedAt DATETIME2 NULL,
     -- Rejection Fields
     LegalComment NVARCHAR(MAX) NULL,
     ApprovalDecision NVARCHAR(50) NULL,
-    RejectedAt DATETIME2 NULL,
     -- Meta
     ContractStatus NVARCHAR(50) DEFAULT 'Running',
     -- Submitted, Approved, Rejected

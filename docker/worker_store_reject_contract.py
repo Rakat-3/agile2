@@ -120,7 +120,6 @@ def main():
                             SET 
                                 LegalComment = ?,
                                 ApprovalDecision = ?,
-                                RejectedAt = SYSUTCDATETIME(),
                                 ContractStatus = 'Rejected'
                             WHERE ContractId = ?
                             """,

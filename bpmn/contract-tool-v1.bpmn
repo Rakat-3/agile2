@@ -22,6 +22,7 @@
     <bpmn:serviceTask id="Notify_Provider_Manager" name="Notify Provider Manager" camunda:asyncBefore="true" camunda:type="external" camunda:topic="notify-provider-manager">
       <bpmn:extensionElements>
         <camunda:inputOutput>
+          <camunda:inputParameter name="toEmail">provider@local.com</camunda:inputParameter>
           <camunda:inputParameter name="subject">Action Required: New Contract Requirements Available</camunda:inputParameter>
           <camunda:inputParameter name="body">
             &lt;div style="font-family: Arial, sans-serif; color: #333;"&gt;
@@ -52,6 +53,7 @@
     <bpmn:serviceTask id="Notify_Legal" name="Notify Legal" camunda:asyncBefore="true" camunda:type="external" camunda:topic="notify-legal">
       <bpmn:extensionElements>
         <camunda:inputOutput>
+          <camunda:inputParameter name="toEmail">legal@local.com</camunda:inputParameter>
           <camunda:inputParameter name="subject">Contract ${contractTitle} Ready for Legal Review</camunda:inputParameter>
           <camunda:inputParameter name="body">Hi Legal Team, Procurement has reviewed the provider offers for ${contractTitle} and forwarded it for your approval.</camunda:inputParameter>
         </camunda:inputOutput>

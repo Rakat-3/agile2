@@ -115,6 +115,10 @@ def main():
                 office_address = get_var(vars_dict, "officeAddress")
                 final_price = get_var(vars_dict, "finalPrice")
 
+                # Legal items to persist from reviewContract.form
+                legal_comment = get_var(vars_dict, "legalcomment")
+                approval_decision = get_var(vars_dict, "approvaldecision")
+
                 # Optional: keep snapshot
                 contract_title = get_var(vars_dict, "contractTitle")
                 contract_type = get_var(vars_dict, "contractType")
@@ -126,18 +130,19 @@ def main():
                             """
                             UPDATE Contracts
                             SET 
-                                StorageLocation = ?,
-                                VersionNumber = ?,
                                 SignedDate = ?,
                                 EmployeeName = ?,
                                 OfficeAddress = ?,
                                 FinalPrice = ?,
+                                LegalComment = ?,
+                                ApprovalDecision = ?,
                                 ApprovedAt = SYSUTCDATETIME(),
                                 ContractStatus = 'Approved'
                             WHERE ContractId = ?
                             """,
-                            storage_location, version_number, signed_date, 
+                            signed_date, 
                             employee_name, office_address, final_price,
+                            legal_comment, approval_decision,
                             contract_id
                         )
                         conn.commit()
