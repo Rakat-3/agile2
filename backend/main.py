@@ -109,22 +109,25 @@ CAMUNDA_URL = "http://camunda:8080/engine-rest" # Use docker service name if run
 class ProviderUpdate(BaseModel):
     providersBudget: Optional[int] = None
     providersComment: Optional[str] = None
+    meetRequirement: Optional[str] = None
+    providersName: Optional[str] = None
 
 @app.get("/api/providers/contracts")
 def get_provider_contracts():
     """
-    Returns contracts for providers with specific fields.
+    Returns contracts for providers that are in 'Submitted' or 'Running' status.
     """
     try:
         conn = get_azure_connection()
         cursor = conn.cursor()
         
-        # Select specific fields requested
+        # Select specific fields requested, filtering for 'Submitted' or 'Running' contracts
         query = """
             SELECT ContractId, ContractTitle, ContractType, Roles, Skills, RequestType, 
                    Budget, ContractStartDate, ContractEndDate, Description,
-                   ContractStatus, ProvidersBudget, ProvidersComment
+                   ContractStatus, ProvidersBudget, ProvidersComment, MeetRequirement, ProvidersName
             FROM Contracts
+            WHERE ContractStatus IN ('Submitted', 'Running')
             ORDER BY CreatedAt DESC
         """
         cursor.execute(query)
@@ -144,7 +147,8 @@ def get_provider_contracts():
 @app.patch("/api/providers/contracts/{contract_id}")
 def update_provider_contract(contract_id: str, update: ProviderUpdate):
     """
-    Updates providersBudget and providersComment for a contract.
+    Updates providersBudget, providersComment and meetRequirement for a contract.
+    This endpoint is used by providers to submit their offers.
     """
     try:
         conn = get_azure_connection()
@@ -153,19 +157,30 @@ def update_provider_contract(contract_id: str, update: ProviderUpdate):
         # Check if contract exists
         cursor.execute("SELECT ContractId FROM Contracts WHERE ContractId = ?", contract_id)
         if not cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Contract not found")
+            conn.close()
+            raise HTTPException(status_code=404, detail=f"Contract with ID {contract_id} not found")
             
         # Update fields
         query = """
             UPDATE Contracts
-            SET ProvidersBudget = ?, ProvidersComment = ?
+            SET ProvidersBudget = ?, ProvidersComment = ?, MeetRequirement = ?, ProvidersName = ?
             WHERE ContractId = ?
         """
-        cursor.execute(query, update.providersBudget, update.providersComment, contract_id)
+        cursor.execute(query, update.providersBudget, update.providersComment, update.meetRequirement, update.providersName, contract_id)
         conn.commit()
         
         conn.close()
-        return {"message": "Contract updated successfully", "contractId": contract_id}
+        return {
+            "status": "success",
+            "message": "Contract updated successfully",
+            "contractId": contract_id,
+            "updatedFields": {
+                "providersBudget": update.providersBudget,
+                "providersComment": update.providersComment,
+                "meetRequirement": update.meetRequirement,
+                "providersName": update.providersName
+            }
+        }
         
     except HTTPException:
         raise

@@ -109,6 +109,11 @@ def main():
                 storage_location = get_var(vars_dict, "storagelocation")
                 version_number = get_var(vars_dict, "versionnumber")
                 signed_date = get_var(vars_dict, "signeddate")
+                
+                # New fields from storeContract.form
+                employee_name = get_var(vars_dict, "employeeName")
+                office_address = get_var(vars_dict, "officeAddress")
+                final_price = get_var(vars_dict, "finalPrice")
 
                 # Optional: keep snapshot
                 contract_title = get_var(vars_dict, "contractTitle")
@@ -124,11 +129,16 @@ def main():
                                 StorageLocation = ?,
                                 VersionNumber = ?,
                                 SignedDate = ?,
+                                EmployeeName = ?,
+                                OfficeAddress = ?,
+                                FinalPrice = ?,
                                 ApprovedAt = SYSUTCDATETIME(),
                                 ContractStatus = 'Approved'
                             WHERE ContractId = ?
                             """,
-                            storage_location, version_number, signed_date, contract_id
+                            storage_location, version_number, signed_date, 
+                            employee_name, office_address, final_price,
+                            contract_id
                         )
                         conn.commit()
                         

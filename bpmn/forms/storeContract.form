@@ -1,27 +1,40 @@
 {
   "components": [
     {
-      "label": "Storage Location",
+      "label": "Employee Name",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_0t4t4dd",
+        "columns": null
+      },
+      "id": "Field_01wvo9o",
+      "key": "employeeName",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Final Price",
+      "type": "number",
+      "layout": {
+        "row": "Row_0d8yevx",
+        "columns": null
+      },
+      "id": "Field_01lvtef",
+      "key": "finalPrice",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Office Address",
       "type": "textfield",
       "layout": {
         "row": "Row_1pa1pt8",
         "columns": null
       },
       "id": "Field_0ewv62d",
-      "key": "storagelocation",
-      "validate": {
-        "required": true
-      }
-    },
-    {
-      "label": "Version Number",
-      "type": "textfield",
-      "layout": {
-        "row": "Row_0wb0adv",
-        "columns": null
-      },
-      "id": "Field_0esz1v8",
-      "key": "versionnumber",
+      "key": "officeAddress",
       "validate": {
         "required": true
       }
@@ -38,7 +51,8 @@
       "key": "signeddate",
       "validate": {
         "required": true
-      }
+      },
+      "disallowPassedDates": true
     }
   ],
   "type": "default",

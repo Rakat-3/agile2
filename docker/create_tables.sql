@@ -25,6 +25,7 @@ GO CREATE TABLE dbo.Contracts (
     -- Provider Fields
     ProvidersBudget INT NULL,
     ProvidersComment NVARCHAR(MAX) DEFAULT '',
+    ProvidersName NVARCHAR(255) NULL,
     -- Approval Fields
     StorageLocation NVARCHAR(255) NULL,
     VersionNumber NVARCHAR(100) NULL,
@@ -37,7 +38,13 @@ GO CREATE TABLE dbo.Contracts (
     -- Meta
     ContractStatus NVARCHAR(50) DEFAULT 'Running',
     -- Submitted, Approved, Rejected
-    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    -- New Fields (Store Contract)
+    EmployeeName NVARCHAR(255) NULL,
+    OfficeAddress NVARCHAR(255) NULL,
+    FinalPrice FLOAT NULL,
+    -- New Fields (Provider Offer)
+    MeetRequirement NVARCHAR(50) NULL
   );
 CREATE UNIQUE INDEX UX_Contracts_ContractId ON dbo.Contracts(ContractId);
 GO

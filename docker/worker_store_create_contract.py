@@ -141,10 +141,12 @@ def main():
                              ContractTitle, ContractType, Roles, Skills, RequestType,
                              Budget, ContractStartDate, ContractEndDate, Description, 
                              ContractStatus, ProvidersBudget, ProvidersComment,
+                             MeetRequirement, ProvidersName,
                              CreatedAt)
                             VALUES
                             (CONVERT(uniqueidentifier, ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                              'Submitted', NULL, '', 
+                             NULL, NULL,
                              SYSUTCDATETIME())
                             """,
                             contract_id, process_instance_id, business_key,
