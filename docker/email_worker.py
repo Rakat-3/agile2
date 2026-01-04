@@ -37,8 +37,9 @@ def handle(task: ExternalTask) -> TaskResult:
     body = task.get_variable("body") or "You have a new task in the Contract Management Tool."
 
     try:
-        print(f"[{TOPIC_NAME}] Sending email to {to_email}...")
+        print(f"[{TOPIC_NAME}] Sending email to {to_email} (Subject: {subject})...")
         send_via_mailhog(to_email, subject, body)
+        print(f"[{TOPIC_NAME}] SUCCESS: Email sent to {to_email}")
         return task.complete({"emailSent": True})
     except Exception as e:
         print(f"[{TOPIC_NAME}] Error: {e}")
