@@ -86,6 +86,7 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     container_name: legal-notify-worker
+    command: [ "python", "email_worker.py" ]
     environment:
       - ENGINE_REST=http://camunda:8080/engine-rest
       - CAMUNDA_USER=demo
@@ -93,6 +94,27 @@ services:
       - MAILHOG_HOST=mailhog
       - MAILHOG_PORT=1025
       - TOPIC_NAME=notify-legal
+      - FROM_EMAIL=noreply@local.com
+    depends_on:
+      - camunda
+      - mailhog
+    networks:
+      - camunda-net
+    restart: unless-stopped
+
+  provider-notify-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: provider-notify-worker
+    command: [ "python", "email_worker.py" ]
+    environment:
+      - ENGINE_REST=http://camunda:8080/engine-rest
+      - CAMUNDA_USER=demo
+      - CAMUNDA_PASS=demo
+      - MAILHOG_HOST=mailhog
+      - MAILHOG_PORT=1025
+      - TOPIC_NAME=notify-provider-manager
       - FROM_EMAIL=noreply@local.com
     depends_on:
       - camunda

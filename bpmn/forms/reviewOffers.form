@@ -1,0 +1,72 @@
+{
+  "components": [
+    {
+      "text": "### Provider Offer Details\nReview the information provided by the provider before forwarding to Legal Counsel.",
+      "type": "text",
+      "layout": {
+        "row": "Row_0",
+        "columns": null
+      },
+      "id": "Text_1"
+    },
+    {
+      "label": "Provider Name",
+      "type": "textfield",
+      "id": "Field_ProvidersName",
+      "key": "providersName",
+      "disabled": true
+    },
+    {
+      "label": "Provider's Budget Offer",
+      "type": "number",
+      "id": "Field_ProvidersBudget",
+      "key": "providersBudget",
+      "disabled": true
+    },
+    {
+      "label": "Provider's Comments",
+      "type": "textarea",
+      "id": "Field_ProvidersComment",
+      "key": "providersComment",
+      "disabled": true
+    },
+    {
+      "label": "Meets Requirements?",
+      "type": "textfield",
+      "id": "Field_MeetRequirement",
+      "key": "meetRequirement",
+      "disabled": true
+    },
+    {
+      "label": "PM Comments for Legal",
+      "type": "textarea",
+      "id": "Field_PMComment",
+      "key": "pmComment"
+    },
+    {
+      "label": "Action",
+      "values": [
+        {
+          "label": "Forward to Legal",
+          "value": "forward"
+        },
+        {
+          "label": "Need Clarification (Loop Back)",
+          "value": "clarify"
+        }
+      ],
+      "type": "radio",
+      "id": "Field_Action",
+      "key": "pmAction"
+    }
+  ],
+  "type": "default",
+  "id": "reviewOffers",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.41.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}
