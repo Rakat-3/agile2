@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_12809zh" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.42.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
   <bpmn:process id="contractTool" name="Contract Tool" isExecutable="true" camunda:historyTimeToLive="60">
-    <bpmn:startEvent id="StartEvent_1" name="Start" camunda:formRef="contractDraft" camunda:formRefBinding="latest" camunda:initiator="initiator">
+    <bpmn:startEvent id="StartEvent_1" name="Start" camunda:initiator="initiator">
       <bpmn:outgoing>Flow_Start</bpmn:outgoing>
     </bpmn:startEvent>
     
     <!-- 1. Draft Contract (PM) -->
-    <bpmn:userTask id="PM_Draft_Contract" name="Draft Contract (PM)" camunda:formRef="contractDraft" camunda:formRefBinding="latest" camunda:assignee="${initiator}">
+    <bpmn:userTask id="PM_Draft_Contract" name="Draft Contract (PM)" camunda:formRef="contractDraft" camunda:formRefBinding="latest" camunda:assignee="${initiator}" camunda:candidateGroups="pmgroup">
       <bpmn:incoming>Flow_Start</bpmn:incoming>
       <bpmn:incoming>Flow_Loop_Back</bpmn:incoming>
       <bpmn:outgoing>Flow_Draft_To_Store</bpmn:outgoing>
@@ -43,7 +43,7 @@
     </bpmn:serviceTask>
     
     <!-- 4. Review Provider Offers (PM) -->
-    <bpmn:userTask id="PM_Review_Offers" name="Review Provider Offers (PM)" camunda:formRef="reviewOffers" camunda:formRefBinding="latest" camunda:assignee="${initiator}">
+    <bpmn:userTask id="PM_Review_Offers" name="Review Provider Offers (PM)" camunda:formRef="reviewOffers" camunda:formRefBinding="latest" camunda:assignee="${initiator}" camunda:candidateGroups="pmgroup">
       <bpmn:documentation>Variables: providersName, providersBudget, providersComment, meetRequirement.</bpmn:documentation>
       <bpmn:incoming>Flow_Notify_To_Review_Offers</bpmn:incoming>
       <bpmn:outgoing>Flow_Review_To_Notify_Legal</bpmn:outgoing>
@@ -63,7 +63,7 @@
     </bpmn:serviceTask>
     
     <!-- 6. Legal Review -->
-    <bpmn:userTask id="Legal_Review" name="Legal Review" camunda:formRef="reviewContract" camunda:formRefBinding="latest">
+    <bpmn:userTask id="Legal_Review" name="Legal Review" camunda:formRef="reviewContract" camunda:formRefBinding="latest" camunda:candidateGroups="lcgroup">
       <bpmn:incoming>Flow_Notify_To_Legal_Review</bpmn:incoming>
       <bpmn:outgoing>Flow_Legal_To_Decision</bpmn:outgoing>
     </bpmn:userTask>
@@ -79,7 +79,7 @@
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approvaldecision == "approve"}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     
-    <bpmn:userTask id="CA_Finalize_Storage" name="CA Finalize Storage" camunda:formRef="storeContract" camunda:formRefBinding="latest">
+    <bpmn:userTask id="CA_Finalize_Storage" name="CA Finalize Storage" camunda:formRef="storeContract" camunda:formRefBinding="latest" camunda:candidateGroups="cagroup">
       <bpmn:documentation>Final step for CA person to review and store the approved contract.</bpmn:documentation>
       <bpmn:incoming>Flow_Approved</bpmn:incoming>
       <bpmn:outgoing>Flow_CA_To_Store_DB</bpmn:outgoing>
